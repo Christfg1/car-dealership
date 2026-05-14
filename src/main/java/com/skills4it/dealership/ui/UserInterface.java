@@ -50,9 +50,7 @@ public class UserInterface {
 
 	private void displayHeader() {
 		System.out.println();
-		System.out.println("============================================================");
-		System.out.println("                 🚗 CAR DEALERSHIP MANAGER   🚗                 ");
-		System.out.println("============================================================");
+
 
 		System.out.println(" Phone: " + dealership.getPhone());
 		System.out.println("------------------------------------------------------------");
