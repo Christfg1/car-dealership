@@ -9,6 +9,16 @@ import com.skills4it.dealership.ui.enums.MenuOption;
 import java.util.List;
 import java.util.Scanner;
 
+import static com.skills4it.dealership.ui.Helper.readDouble;
+import static com.skills4it.dealership.ui.Helper.readPositiveDouble;
+import static com.skills4it.dealership.ui.Helper.readPositiveInt;
+import static com.skills4it.dealership.ui.Helper.readRequiredString;
+import static com.skills4it.dealership.ui.Helper.readString;
+
+import static com.skills4it.dealership.ui.Helper.readInt;
+import static com.skills4it.dealership.ui.Helper.readYear;
+
+
 public class UserInterface {
     private final Scanner scanner;
     private final DealershipFileManager fileManager;
@@ -60,7 +70,7 @@ public class UserInterface {
         }
 
         switch (option) {
-            case FIND_BY_PRICE -> processGetByPriceRequest();
+			case FIND_BY_PRICE -> processGetByPriceRequest();
             case FIND_BY_MAKE_MODEL -> processGetByMakeModelRequest();
             case FIND_BY_YEAR -> processGetByYearRequest();
             case FIND_BY_COLOR -> processGetByColorRequest();
@@ -79,7 +89,10 @@ public class UserInterface {
         displayVehicles(dealership.getVehiclesByPrice(minPrice, maxPrice));
     }
 
-    private void processGetByMakeModelRequest() {
+
+
+
+	private void processGetByMakeModelRequest() {
         String make = readString("Make, leave empty for any: ");
         String model = readString("Model, leave empty for any: ");
         displayVehicles(dealership.getVehiclesByMakeModel(make, model));
@@ -174,20 +187,7 @@ public class UserInterface {
         pause();
     }
 
-    private String readString(String prompt) {
-        System.out.print(prompt);
-        return scanner.nextLine().trim();
-    }
 
-    private String readRequiredString(String prompt) {
-        while (true) {
-            String value = readString(prompt);
-            if (!value.isBlank()) {
-                return value;
-            }
-            System.out.println("This field is required. Please try again.");
-        }
-    }
 
     private VehicleType readVehicleType(String prompt) {
         while (true) {
@@ -215,48 +215,7 @@ public class UserInterface {
         }
     }
 
-    private int readPositiveInt(String prompt) {
-        while (true) {
-            int number = readInt(prompt);
-            if (number >= 0) {
-                return number;
-            }
-            System.out.println("Please enter a positive number.");
-        }
-    }
 
-    private int readYear(String prompt) {
-        while (true) {
-            int year = readInt(prompt);
-            if (year >= 1886 && year <= 2100) {
-                return year;
-            }
-            System.out.println("Please enter a realistic vehicle year between 1886 and 2100.");
-        }
-    }
-
-    private double readDouble(String prompt) {
-        while (true) {
-            System.out.print(prompt);
-            String input = scanner.nextLine().trim();
-
-            try {
-                return Double.parseDouble(input);
-            } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid number, for example 1995.00.");
-            }
-        }
-    }
-
-    private double readPositiveDouble(String prompt) {
-        while (true) {
-            double number = readDouble(prompt);
-            if (number >= 0) {
-                return number;
-            }
-            System.out.println("Please enter a positive number.");
-        }
-    }
 
     private void pause() {
         System.out.println();

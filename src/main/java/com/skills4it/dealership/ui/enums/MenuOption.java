@@ -10,6 +10,7 @@ public enum MenuOption {
     FIND_BY_COLOR(4, "Find vehicles by color"),
     FIND_BY_MILEAGE(5, "Find vehicles by mileage range"),
     FIND_BY_TYPE(6, "Find vehicles by type"),
+	FIND_BY_YEARCREATED(10,"Find by Year it was created"),
     LIST_ALL(7, "List all vehicles"),
     ADD_VEHICLE(8, "Add a vehicle"),
     REMOVE_VEHICLE(9, "Remove a vehicle"),
