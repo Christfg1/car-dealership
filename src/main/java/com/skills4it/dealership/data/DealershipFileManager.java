@@ -17,102 +17,118 @@ import java.util.List;
 /**
  * Handles loading and saving dealership inventory data from and to a CSV file.
  *
- * This class separates file handling from the business logic in the Dealership class.
- * That keeps the application cleaner and easier to maintain.
+ * This class is responsible for:
+ * - Reading dealership information from inventory.csv
+ * - Reading vehicle information from inventory.csv
+ * - Saving dealership and vehicle information back to inventory.csv
+ * - Creating a backup before overwriting the file
+ *
+ * This keeps file handling separate from the business logic in the Dealership class.
  */
 public class DealershipFileManager {
 
-	// Path to the inventory CSV file inside the Maven resources folder.
 	private static final Path INVENTORY_PATH = Path.of("src", "main", "resources", "inventory.csv");
 
 	// Regex delimiter for splitting pipe-separated CSV lines.
-	// The pipe symbol has special meaning in regex, so it must be escaped.
+	// The pipe symbol | has special meaning in regex, so it must be escaped.
 	private static final String DELIMITER = "\\|";
+
+	private static final int DEALERSHIP_FIELD_COUNT = 3;
+	private static final int VEHICLE_FIELD_COUNT = 8;
 
 	/**
 	 * Loads the dealership and all vehicles from the inventory file.
 	 *
-	 * The first line contains dealership information:
+	 * Expected first line:
 	 * name|address|phone
 	 *
-	 * Every next line contains one vehicle:
+	 * Expected vehicle lines:
 	 * vin|year|make|model|type|color|odometer|price
+	 *
+	 * @return a Dealership object containing all vehicles from the file
 	 */
 	public Dealership getDealership() {
-		// Make sure the expected file exists before trying to read it.
 		ensureInventoryFileExists();
 
-		// try-with-resources automatically closes the BufferedReader after reading.
 		try (BufferedReader reader = Files.newBufferedReader(INVENTORY_PATH)) {
-
-			// The first line contains the dealership data.
 			String dealershipLine = reader.readLine();
 
 			if (dealershipLine == null || dealershipLine.isBlank()) {
 				throw new IllegalStateException("The inventory file is empty.");
 			}
 
-			// Split the dealership line into name, address, and phone.
-			String[] dealershipFields = dealershipLine.split(DELIMITER);
-			if (dealershipFields.length != 3) {
-				throw new IllegalStateException("Invalid dealership line. Expected: name|address|phone");
-			}
-
-			// Create the Dealership object using the first CSV line.
-			Dealership dealership = new Dealership(dealershipFields[0], dealershipFields[1], dealershipFields[2]);
+			Dealership dealership = parseDealership(dealershipLine);
 
 			String vehicleLine;
 
-			// Read the remaining lines. Each line should represent one vehicle.
 			while ((vehicleLine = reader.readLine()) != null) {
-
-				// Skip empty lines so blank rows in the file do not crash the program.
 				if (vehicleLine.isBlank()) {
 					continue;
 				}
 
-				// Convert the CSV line into a Vehicle object and add it to the dealership inventory.
-				dealership.addVehicle(parseVehicle(vehicleLine));
+				Vehicle vehicle = parseVehicle(vehicleLine);
+				dealership.addVehicle(vehicle);
 			}
 
 			return dealership;
-		} catch (IOException e) {
 
-			// Wrap the checked IOException in an unchecked exception with a clear message.
-			throw new IllegalStateException("Could not read inventory file: " + INVENTORY_PATH, e);
+		} catch (IOException e) {
+			throw new IllegalStateException("Could not read inventory file: " + INVENTORY_PATH.toAbsolutePath(), e);
 		}
 	}
 
 	/**
-	 * Saves the current dealership data back to the inventory file.
+	 * Saves the dealership and all vehicles to the inventory file.
 	 *
-	 * Before overwriting the original file, a backup copy is created.
+	 * A backup file is created before the original file is overwritten.
+	 *
+	 * @param dealership the dealership that should be saved
 	 */
 	public void saveDealership(Dealership dealership) {
-		// Check that the file exists before saving.
-		ensureInventoryFileExists();
+		if (dealership == null) {
+			throw new IllegalArgumentException("Dealership cannot be null.");
+		}
 
-		// Create a timestamped backup before overwriting the inventory file.
+		ensureInventoryFileExists();
 		createBackupFile();
 
-		// try-with-resources automatically closes the BufferedWriter after writing.
 		try (BufferedWriter writer = Files.newBufferedWriter(INVENTORY_PATH)) {
-
-			// Write the dealership data as the first line.
 			writer.write(dealership.toCsvHeaderLine());
 			writer.newLine();
 
-			// Write every vehicle as one CSV line.
 			List<Vehicle> vehicles = dealership.getAllVehicles();
+
 			for (Vehicle vehicle : vehicles) {
 				writer.write(vehicle.toCsvLine());
 				writer.newLine();
 			}
-		} catch (IOException e) {
 
-			// Give a clear error if writing to the file fails.
-			throw new IllegalStateException("Could not save inventory file: " + INVENTORY_PATH, e);
+		} catch (IOException e) {
+			throw new IllegalStateException("Could not save inventory file: " + INVENTORY_PATH.toAbsolutePath(), e);
 		}
+	}
+
+	/**
+	 * Converts the first CSV line into a Dealership object.
+	 *
+	 * Expected format:
+	 * name|address|phone
+	 *
+	 * @param dealershipLine the first line from the inventory file
+	 * @return a Dealership object
+	 */
+	private Dealership parseDealership(String dealershipLine) {
+		String[] fields = splitCsvLine(dealershipLine, DEALERSHIP_FIELD_COUNT, "dealership");
+
+		String name = fields[0].trim();
+		String address = fields[1].trim();
+		String phone = fields[2].trim();
+
+		validateRequiredField(name, "Dealership name", dealershipLine);
+		validateRequiredField(address, "Dealership address", dealershipLine);
+		validateRequiredField(phone, "Dealership phone", dealershipLine);
+
+		return new Dealership(name, address, phone);
 	}
 
 	/**
@@ -120,38 +136,124 @@ public class DealershipFileManager {
 	 *
 	 * Expected format:
 	 * vin|year|make|model|type|color|odometer|price
+	 *
+	 * @param vehicleLine one line from the inventory file
+	 * @return a Vehicle object
 	 */
 	private Vehicle parseVehicle(String vehicleLine) {
-		// Split the line into separate fields using the pipe delimiter.
-		String[] fields = vehicleLine.split(DELIMITER);
-
-		// A vehicle line must have exactly 8 fields.
-		if (fields.length != 8) {
-			throw new IllegalStateException("Invalid vehicle line. Expected 8 fields: " + vehicleLine);
-		}
+		String[] fields = splitCsvLine(vehicleLine, VEHICLE_FIELD_COUNT, "vehicle");
 
 		try {
-			// Convert the text fields from the CSV file into the correct Java data types.
-			int vin = Integer.parseInt(fields[0]);
-			int year = Integer.parseInt(fields[1]);
-			String make = fields[2];
-			String model = fields[3];
+			int vin = parseInteger(fields[0], "VIN", vehicleLine);
+			int year = parseInteger(fields[1], "year", vehicleLine);
+			String make = fields[2].trim();
+			String model = fields[3].trim();
+			String typeText = fields[4].trim();
+			String color = fields[5].trim();
+			int odometer = parseInteger(fields[6], "odometer", vehicleLine);
+			double price = parseDouble(fields[7], "price", vehicleLine);
 
-			// Convert the text value to a VehicleType enum.
-			// If the text does not match a valid type, throw a clear error.
-			VehicleType vehicleType = VehicleType.fromString(fields[4])
-					.orElseThrow(() -> new IllegalStateException("Invalid vehicle type in vehicle line: " + vehicleLine));
+			validateRequiredField(make, "Make", vehicleLine);
+			validateRequiredField(model, "Model", vehicleLine);
+			validateRequiredField(typeText, "Vehicle type", vehicleLine);
+			validateRequiredField(color, "Color", vehicleLine);
 
-			String color = fields[5];
-			int odometer = Integer.parseInt(fields[6]);
-			double price = Double.parseDouble(fields[7]);
+			VehicleType vehicleType = VehicleType.fromString(typeText)
+					.orElseThrow(() -> new IllegalStateException(
+							"Invalid vehicle type '" + typeText + "' in vehicle line: " + vehicleLine
+					));
 
-			// Create and return a Vehicle object with the parsed data.
 			return new Vehicle(vin, year, make, model, vehicleType, color, odometer, price);
-		} catch (NumberFormatException e) {
 
-			// This catches invalid numbers, such as "abc" for year, odometer, or price.
+		} catch (NumberFormatException e) {
 			throw new IllegalStateException("Invalid number in vehicle line: " + vehicleLine, e);
+		}
+	}
+
+	/**
+	 * Splits a CSV line and validates the expected number of fields.
+	 *
+	 * The -1 keeps empty values at the end of the line.
+	 * Without -1, Java removes trailing empty fields.
+	 *
+	 * Example:
+	 * "123|2020|Ford|" keeps the last empty field.
+	 *
+	 * @param line the CSV line
+	 * @param expectedFieldCount the expected number of fields
+	 * @param lineType describes the type of line for error messages
+	 * @return the split fields
+	 */
+	private String[] splitCsvLine(String line, int expectedFieldCount, String lineType) {
+		String[] fields = line.split(DELIMITER, -1);
+
+		if (fields.length != expectedFieldCount) {
+			throw new IllegalStateException(
+					"Invalid " + lineType + " line. Expected "
+							+ expectedFieldCount + " fields, but found "
+							+ fields.length + ": " + line
+			);
+		}
+
+		return fields;
+	}
+
+	/**
+	 * Parses a required integer field.
+	 *
+	 * @param value the text value from the CSV file
+	 * @param fieldName the name of the field for error messages
+	 * @param originalLine the original CSV line
+	 * @return the parsed integer
+	 */
+	private int parseInteger(String value, String fieldName, String originalLine) {
+		String trimmedValue = value.trim();
+
+		validateRequiredField(trimmedValue, fieldName, originalLine);
+
+		try {
+			return Integer.parseInt(trimmedValue);
+		} catch (NumberFormatException e) {
+			throw new NumberFormatException(
+					"Invalid integer for " + fieldName + ": '" + trimmedValue + "' in line: " + originalLine
+			);
+		}
+	}
+
+	/**
+	 * Parses a required decimal number field.
+	 *
+	 * @param value the text value from the CSV file
+	 * @param fieldName the name of the field for error messages
+	 * @param originalLine the original CSV line
+	 * @return the parsed double
+	 */
+	private double parseDouble(String value, String fieldName, String originalLine) {
+		String trimmedValue = value.trim();
+
+		validateRequiredField(trimmedValue, fieldName, originalLine);
+
+		try {
+			return Double.parseDouble(trimmedValue);
+		} catch (NumberFormatException e) {
+			throw new NumberFormatException(
+					"Invalid decimal number for " + fieldName + ": '" + trimmedValue + "' in line: " + originalLine
+			);
+		}
+	}
+
+	/**
+	 * Validates that a required field is not empty.
+	 *
+	 * @param value the value to validate
+	 * @param fieldName the name of the field for error messages
+	 * @param originalLine the original CSV line
+	 */
+	private void validateRequiredField(String value, String fieldName, String originalLine) {
+		if (value == null || value.isBlank()) {
+			throw new IllegalStateException(
+					fieldName + " is required in line: " + originalLine
+			);
 		}
 	}
 
@@ -162,31 +264,31 @@ public class DealershipFileManager {
 	 */
 	private void ensureInventoryFileExists() {
 		if (!Files.exists(INVENTORY_PATH)) {
-			throw new IllegalStateException("Inventory file not found at: " + INVENTORY_PATH.toAbsolutePath());
+			throw new IllegalStateException(
+					"Inventory file not found at: " + INVENTORY_PATH.toAbsolutePath()
+			);
 		}
 	}
 
 	/**
 	 * Creates a timestamped backup copy of the inventory file.
 	 *
-	 * Example backup filename:
+	 * Example:
 	 * inventory-20260514-211530.csv
 	 */
 	private void createBackupFile() {
 		try {
-			// Create a backups folder next to the inventory file.
 			Path backupDirectory = INVENTORY_PATH.getParent().resolve("backups");
 			Files.createDirectories(backupDirectory);
 
-			// Use a timestamp so every backup gets a unique filename.
-			String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+			String timestamp = LocalDateTime.now()
+					.format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+
 			Path backupPath = backupDirectory.resolve("inventory-" + timestamp + ".csv");
 
-			// Copy the current inventory file to the backup folder.
 			Files.copy(INVENTORY_PATH, backupPath, StandardCopyOption.REPLACE_EXISTING);
-		} catch (IOException e) {
 
-			// Stop saving if the backup could not be created.
+		} catch (IOException e) {
 			throw new IllegalStateException("Could not create inventory backup file.", e);
 		}
 	}
