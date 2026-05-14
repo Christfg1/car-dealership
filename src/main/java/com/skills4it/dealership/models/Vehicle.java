@@ -2,6 +2,7 @@ package com.skills4it.dealership.models;
 
 import com.skills4it.dealership.models.enums.VehicleType;
 
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -11,7 +12,8 @@ import java.util.Objects;
  * such as VIN, year, make, model, type, color, odometer, and price.
  */
 public class Vehicle {
-	private int vin;
+
+	private final int vin;
 	private int year;
 	private String make;
 	private String model;
@@ -20,23 +22,28 @@ public class Vehicle {
 	private int odometer;
 	private double price;
 
-	public Vehicle(int vin, int year, String make, String model, VehicleType vehicleType, String color, int odometer, double price) {
-		this.vin = vin;
-		this.year = year;
-		this.make = make;
-		this.model = model;
-		this.vehicleType = vehicleType;
-		this.color = color;
-		this.odometer = odometer;
-		this.price = price;
+	public Vehicle(
+			int vin,
+			int year,
+			String make,
+			String model,
+			VehicleType vehicleType,
+			String color,
+			int odometer,
+			double price
+	) {
+		this.vin = validateVin(vin);
+		this.year = validateYear(year);
+		this.make = validateRequiredText(make, "Make");
+		this.model = validateRequiredText(model, "Model");
+		this.vehicleType = validateVehicleType(vehicleType);
+		this.color = validateRequiredText(color, "Color");
+		this.odometer = validateNonNegativeInt(odometer, "Odometer");
+		this.price = validateNonNegativeDouble(price, "Price");
 	}
 
 	public int getVin() {
 		return vin;
-	}
-
-	public void setVin(int vin) {
-		this.vin = vin;
 	}
 
 	public int getYear() {
@@ -44,7 +51,7 @@ public class Vehicle {
 	}
 
 	public void setYear(int year) {
-		this.year = year;
+		this.year = validateYear(year);
 	}
 
 	public String getMake() {
@@ -52,7 +59,7 @@ public class Vehicle {
 	}
 
 	public void setMake(String make) {
-		this.make = make;
+		this.make = validateRequiredText(make, "Make");
 	}
 
 	public String getModel() {
@@ -60,7 +67,7 @@ public class Vehicle {
 	}
 
 	public void setModel(String model) {
-		this.model = model;
+		this.model = validateRequiredText(model, "Model");
 	}
 
 	public VehicleType getVehicleType() {
@@ -68,7 +75,7 @@ public class Vehicle {
 	}
 
 	public void setVehicleType(VehicleType vehicleType) {
-		this.vehicleType = vehicleType;
+		this.vehicleType = validateVehicleType(vehicleType);
 	}
 
 	public String getColor() {
@@ -76,7 +83,7 @@ public class Vehicle {
 	}
 
 	public void setColor(String color) {
-		this.color = color;
+		this.color = validateRequiredText(color, "Color");
 	}
 
 	public int getOdometer() {
@@ -84,7 +91,7 @@ public class Vehicle {
 	}
 
 	public void setOdometer(int odometer) {
-		this.odometer = odometer;
+		this.odometer = validateNonNegativeInt(odometer, "Odometer");
 	}
 
 	public double getPrice() {
@@ -92,7 +99,7 @@ public class Vehicle {
 	}
 
 	public void setPrice(double price) {
-		this.price = price;
+		this.price = validateNonNegativeDouble(price, "Price");
 	}
 
 	/**
@@ -111,7 +118,8 @@ public class Vehicle {
 				vehicleType.getDisplayName(),
 				color,
 				String.valueOf(odometer),
-				String.format("%.2f", price));
+				String.format(Locale.US, "%.2f", price)
+		);
 	}
 
 	/**
@@ -122,8 +130,17 @@ public class Vehicle {
 	 */
 	@Override
 	public String toString() {
-		return String.format("%-8d %-6d %-12s %-15s %-8s %-10s %,10d $%,10.2f",
-				vin, year, make, model, vehicleType.getDisplayName(), color, odometer, price);
+		return String.format(Locale.US,
+				"%-8d %-6d %-12s %-15s %-8s %-10s %,10d $%,10.2f",
+				vin,
+				year,
+				make,
+				model,
+				vehicleType.getDisplayName(),
+				color,
+				odometer,
+				price
+		);
 	}
 
 	/**
@@ -133,8 +150,14 @@ public class Vehicle {
 	 */
 	@Override
 	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (!(o instanceof Vehicle vehicle)) return false;
+		if (this == o) {
+			return true;
+		}
+
+		if (!(o instanceof Vehicle vehicle)) {
+			return false;
+		}
+
 		return vin == vehicle.vin;
 	}
 
@@ -146,5 +169,53 @@ public class Vehicle {
 	@Override
 	public int hashCode() {
 		return Objects.hash(vin);
+	}
+
+	private static int validateVin(int vin) {
+		if (vin <= 0) {
+			throw new IllegalArgumentException("VIN must be a positive number.");
+		}
+
+		return vin;
+	}
+
+	private static int validateYear(int year) {
+		if (year < 1886 || year > 2100) {
+			throw new IllegalArgumentException("Year must be between 1886 and 2100.");
+		}
+
+		return year;
+	}
+
+	private static String validateRequiredText(String value, String fieldName) {
+		if (value == null || value.isBlank()) {
+			throw new IllegalArgumentException(fieldName + " is required.");
+		}
+
+		return value.trim();
+	}
+
+	private static VehicleType validateVehicleType(VehicleType vehicleType) {
+		if (vehicleType == null) {
+			throw new IllegalArgumentException("Vehicle type is required.");
+		}
+
+		return vehicleType;
+	}
+
+	private static int validateNonNegativeInt(int value, String fieldName) {
+		if (value < 0) {
+			throw new IllegalArgumentException(fieldName + " cannot be negative.");
+		}
+
+		return value;
+	}
+
+	private static double validateNonNegativeDouble(double value, String fieldName) {
+		if (value < 0) {
+			throw new IllegalArgumentException(fieldName + " cannot be negative.");
+		}
+
+		return value;
 	}
 }

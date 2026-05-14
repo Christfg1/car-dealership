@@ -7,219 +7,272 @@ import com.skills4it.dealership.models.enums.VehicleType;
 import com.skills4it.dealership.ui.enums.MenuOption;
 
 import java.util.List;
-import java.util.Scanner;
 
 import static com.skills4it.dealership.ui.Helper.readDouble;
+import static com.skills4it.dealership.ui.Helper.readInt;
 import static com.skills4it.dealership.ui.Helper.readPositiveDouble;
 import static com.skills4it.dealership.ui.Helper.readPositiveInt;
 import static com.skills4it.dealership.ui.Helper.readRequiredString;
 import static com.skills4it.dealership.ui.Helper.readString;
-
-import static com.skills4it.dealership.ui.Helper.readInt;
 import static com.skills4it.dealership.ui.Helper.readYear;
 
-
 public class UserInterface {
-    private final Scanner scanner;
-    private final DealershipFileManager fileManager;
-    private Dealership dealership;
 
-    public UserInterface() {
-        this.scanner = new Scanner(System.in);
-        this.fileManager = new DealershipFileManager();
-    }
+	private final DealershipFileManager fileManager;
+	private Dealership dealership;
 
-    public void display() {
-        init();
+	public UserInterface() {
+		this.fileManager = new DealershipFileManager();
+	}
 
-        MenuOption selectedOption;
-        do {
-            displayHeader();
-            displayMenu();
-            int choice = readInt("Choose an option: ");
-            selectedOption = MenuOption.fromCode(choice).orElse(null);
-            handleMenuChoice(selectedOption);
-        } while (selectedOption != MenuOption.QUIT);
+	public void display() {
+		init();
 
-        System.out.println("Goodbye!");
-    }
+		MenuOption selectedOption;
 
-    private void init() {
-        this.dealership = fileManager.getDealership();
-    }
+		do {
+			displayHeader();
+			displayMenu();
 
-    private void displayHeader() {
-        System.out.println();
-        System.out.println("=============================================");
-        System.out.println(dealership.getName());
-        System.out.println(dealership.getAddress() + " | " + dealership.getPhone());
-        System.out.println("=============================================");
-    }
+			int choice = readInt("Choose an option: ");
+			selectedOption = MenuOption.fromCode(choice).orElse(null);
 
-    private void displayMenu() {
-        for (MenuOption option : MenuOption.values()) {
-            System.out.printf("%-3d - %s%n", option.getCode(), option.getLabel());
-        }
-        System.out.println();
-    }
+			handleMenuChoice(selectedOption);
 
-    private void handleMenuChoice(MenuOption option) {
-        if (option == null) {
-            System.out.println("Invalid option. Please try again.");
-            return;
-        }
+		} while (selectedOption != MenuOption.QUIT);
 
-        switch (option) {
+		System.out.println("Goodbye!");
+	}
+
+	private void init() {
+		this.dealership = fileManager.getDealership();
+	}
+
+	private void displayHeader() {
+		System.out.println();
+		System.out.println("=============================================");
+		System.out.println(dealership.getName());
+		System.out.println(dealership.getAddress() + " | " + dealership.getPhone());
+		System.out.println("=============================================");
+	}
+
+	private void displayMenu() {
+		for (MenuOption option : MenuOption.values()) {
+			System.out.printf("%-3d - %s%n", option.getCode(), option.getLabel());
+		}
+
+		System.out.println();
+	}
+
+	private void handleMenuChoice(MenuOption option) {
+		if (option == null) {
+			System.out.println("Invalid option. Please try again.");
+			pause();
+			return;
+		}
+
+		switch (option) {
 			case FIND_BY_PRICE -> processGetByPriceRequest();
-            case FIND_BY_MAKE_MODEL -> processGetByMakeModelRequest();
-            case FIND_BY_YEAR -> processGetByYearRequest();
-            case FIND_BY_COLOR -> processGetByColorRequest();
-            case FIND_BY_MILEAGE -> processGetByMileageRequest();
-            case FIND_BY_TYPE -> processGetByVehicleTypeRequest();
-            case LIST_ALL -> processAllVehiclesRequest();
-            case ADD_VEHICLE -> processAddVehicleRequest();
-            case REMOVE_VEHICLE -> processRemoveVehicleRequest();
-            case QUIT -> { }
-        }
-    }
+			case FIND_BY_MAKE_MODEL -> processGetByMakeModelRequest();
+			case FIND_BY_YEAR -> processGetByYearRequest();
+			case FIND_BY_COLOR -> processGetByColorRequest();
+			case FIND_BY_MILEAGE -> processGetByMileageRequest();
+			case FIND_BY_TYPE -> processGetByVehicleTypeRequest();
+			case LIST_ALL -> processAllVehiclesRequest();
+			case ADD_VEHICLE -> processAddVehicleRequest();
+			case REMOVE_VEHICLE -> processRemoveVehicleRequest();
+			case QUIT -> {
+				// No action needed. The loop will end.
+			}
+		}
+	}
 
-    private void processGetByPriceRequest() {
-        double minPrice = readDouble("Minimum price: ");
-        double maxPrice = readDouble("Maximum price: ");
-        displayVehicles(dealership.getVehiclesByPrice(minPrice, maxPrice));
-    }
+	private void processGetByPriceRequest() {
+		double minPrice = readPositiveDouble("Minimum price: ");
+		double maxPrice = readPositiveDouble("Maximum price: ");
 
+		if (minPrice > maxPrice) {
+			System.out.println("Minimum price cannot be higher than maximum price.");
+			pause();
+			return;
+		}
 
-
+		displayVehicles(dealership.getVehiclesByPrice(minPrice, maxPrice));
+	}
 
 	private void processGetByMakeModelRequest() {
-        String make = readString("Make, leave empty for any: ");
-        String model = readString("Model, leave empty for any: ");
-        displayVehicles(dealership.getVehiclesByMakeModel(make, model));
-    }
+		String make = readString("Make, leave empty for any: ");
+		String model = readString("Model, leave empty for any: ");
 
-    private void processGetByYearRequest() {
-        int minYear = readInt("Minimum year: ");
-        int maxYear = readInt("Maximum year: ");
-        displayVehicles(dealership.getVehiclesByYear(minYear, maxYear));
-    }
+		displayVehicles(dealership.getVehiclesByMakeModel(make, model));
+	}
 
-    private void processGetByColorRequest() {
-        String color = readString("Color: ");
-        displayVehicles(dealership.getVehiclesByColor(color));
-    }
+	private void processGetByYearRequest() {
+		int minYear = readYear("Minimum year: ");
+		int maxYear = readYear("Maximum year: ");
 
-    private void processGetByMileageRequest() {
-        int minMileage = readInt("Minimum mileage: ");
-        int maxMileage = readInt("Maximum mileage: ");
-        displayVehicles(dealership.getVehiclesByMileage(minMileage, maxMileage));
-    }
+		if (minYear > maxYear) {
+			System.out.println("Minimum year cannot be higher than maximum year.");
+			pause();
+			return;
+		}
 
-    private void processGetByVehicleTypeRequest() {
-        VehicleType vehicleType = readVehicleType("Vehicle type (" + VehicleType.getAllowedValuesText() + "): ");
-        displayVehicles(dealership.getVehiclesByType(vehicleType));
-    }
+		displayVehicles(dealership.getVehiclesByYear(minYear, maxYear));
+	}
 
-    private void processAllVehiclesRequest() {
-        displayVehicles(dealership.getAllVehicles());
-    }
+	private void processGetByColorRequest() {
+		String color = readRequiredString("Color: ");
 
-    private void processAddVehicleRequest() {
-        System.out.println("Add a new vehicle");
+		displayVehicles(dealership.getVehiclesByColor(color));
+	}
 
-        int vin = readPositiveInt("VIN: ");
-        if (dealership.findVehicleByVin(vin).isPresent()) {
-            System.out.println("A vehicle with this VIN already exists. Vehicle was not added.");
-            return;
-        }
+	private void processGetByMileageRequest() {
+		int minMileage = readPositiveInt("Minimum mileage: ");
+		int maxMileage = readPositiveInt("Maximum mileage: ");
 
-        int year = readYear("Year: ");
-        String make = readRequiredString("Make: ");
-        String model = readRequiredString("Model: ");
-        VehicleType vehicleType = readVehicleType("Vehicle type (" + VehicleType.getAllowedValuesText() + "): ");
-        String color = readRequiredString("Color: ");
-        int odometer = readPositiveInt("Odometer: ");
-        double price = readPositiveDouble("Price: ");
+		if (minMileage > maxMileage) {
+			System.out.println("Minimum mileage cannot be higher than maximum mileage.");
+			pause();
+			return;
+		}
 
-        Vehicle vehicle = new Vehicle(vin, year, make, model, vehicleType, color, odometer, price);
-        dealership.addVehicle(vehicle);
-        fileManager.saveDealership(dealership);
+		displayVehicles(dealership.getVehiclesByMileage(minMileage, maxMileage));
+	}
 
-        System.out.println("Vehicle added and inventory saved.");
-    }
+	private void processGetByVehicleTypeRequest() {
+		VehicleType vehicleType = readVehicleType(
+				"Vehicle type (" + VehicleType.getAllowedValuesText() + "): "
+		);
 
-    private void processRemoveVehicleRequest() {
-        int vin = readPositiveInt("Enter VIN of vehicle to remove: ");
+		displayVehicles(dealership.getVehiclesByType(vehicleType));
+	}
 
-        dealership.findVehicleByVin(vin).ifPresentOrElse(vehicle -> {
-            System.out.println("Vehicle found:");
-            displayVehicles(List.of(vehicle));
+	private void processAllVehiclesRequest() {
+		displayVehicles(dealership.getAllVehicles());
+	}
 
-            String confirmation = readString("Remove this vehicle? yes/no: ");
-            if (confirmation.equalsIgnoreCase("yes") || confirmation.equalsIgnoreCase("y")) {
-                dealership.removeVehicleByVin(vin);
-                fileManager.saveDealership(dealership);
-                System.out.println("Vehicle removed and inventory saved.");
-            } else {
-                System.out.println("Remove cancelled.");
-            }
-        }, () -> System.out.println("No vehicle found with VIN " + vin + "."));
-    }
+	private void processAddVehicleRequest() {
+		System.out.println();
+		System.out.println("Add a new vehicle");
 
-    private void displayVehicles(List<Vehicle> vehicles) {
-        if (vehicles == null || vehicles.isEmpty()) {
-            System.out.println("No vehicles found.");
-            pause();
-            return;
-        }
+		int vin = readPositiveInt("VIN: ");
 
-        System.out.println();
-        System.out.printf("%-8s %-6s %-12s %-15s %-8s %-10s %10s %11s%n",
-                "VIN", "YEAR", "MAKE", "MODEL", "TYPE", "COLOR", "ODOMETER", "PRICE");
-        System.out.println("---------------------------------------------------------------------------------------");
+		if (dealership.findVehicleByVin(vin).isPresent()) {
+			System.out.println("A vehicle with this VIN already exists. Vehicle was not added.");
+			pause();
+			return;
+		}
 
-        for (Vehicle vehicle : vehicles) {
-            System.out.println(vehicle);
-        }
+		int year = readYear("Year: ");
+		String make = readRequiredString("Make: ");
+		String model = readRequiredString("Model: ");
 
-        System.out.println("---------------------------------------------------------------------------------------");
-        System.out.println("Total vehicles: " + vehicles.size());
-        pause();
-    }
+		VehicleType vehicleType = readVehicleType(
+				"Vehicle type (" + VehicleType.getAllowedValuesText() + "): "
+		);
 
+		String color = readRequiredString("Color: ");
+		int odometer = readPositiveInt("Odometer: ");
+		double price = readPositiveDouble("Price: ");
 
+		Vehicle vehicle = new Vehicle(
+				vin,
+				year,
+				make,
+				model,
+				vehicleType,
+				color,
+				odometer,
+				price
+		);
 
-    private VehicleType readVehicleType(String prompt) {
-        while (true) {
-            String input = readRequiredString(prompt);
-            var vehicleType = VehicleType.fromString(input);
+		dealership.addVehicle(vehicle);
+		fileManager.saveDealership(dealership);
 
-            if (vehicleType.isPresent()) {
-                return vehicleType.get();
-            }
+		System.out.println("Vehicle added and inventory saved.");
+		pause();
+	}
 
-            System.out.println("Invalid vehicle type. Allowed values: " + VehicleType.getAllowedValuesText());
-        }
-    }
+	private void processRemoveVehicleRequest() {
+		int vin = readPositiveInt("Enter VIN of vehicle to remove: ");
 
-    private int readInt(String prompt) {
-        while (true) {
-            System.out.print(prompt);
-            String input = scanner.nextLine().trim();
+		dealership.findVehicleByVin(vin).ifPresentOrElse(
+				vehicle -> confirmAndRemoveVehicle(vehicle, vin),
+				() -> {
+					System.out.println("No vehicle found with VIN " + vin + ".");
+					pause();
+				}
+		);
+	}
 
-            try {
-                return Integer.parseInt(input);
-            } catch (NumberFormatException e) {
-                System.out.println("Please enter a whole number.");
-            }
-        }
-    }
+	private void confirmAndRemoveVehicle(Vehicle vehicle, int vin) {
+		System.out.println("Vehicle found:");
+		displayVehiclesWithoutPause(List.of(vehicle));
 
+		String confirmation = readString("Remove this vehicle? yes/no: ");
 
+		if (confirmation.equalsIgnoreCase("yes") || confirmation.equalsIgnoreCase("y")) {
+			dealership.removeVehicleByVin(vin);
+			fileManager.saveDealership(dealership);
 
-    private void pause() {
-        System.out.println();
-        System.out.print("Press Enter to continue...");
-        scanner.nextLine();
-    }
+			System.out.println("Vehicle removed and inventory saved.");
+		} else {
+			System.out.println("Remove cancelled.");
+		}
+
+		pause();
+	}
+
+	private VehicleType readVehicleType(String prompt) {
+		while (true) {
+			String input = readRequiredString(prompt);
+
+			var vehicleType = VehicleType.fromString(input);
+
+			if (vehicleType.isPresent()) {
+				return vehicleType.get();
+			}
+
+			System.out.println("Invalid vehicle type. Allowed values: " + VehicleType.getAllowedValuesText());
+		}
+	}
+
+	private void displayVehicles(List<Vehicle> vehicles) {
+		displayVehiclesWithoutPause(vehicles);
+		pause();
+	}
+
+	private void displayVehiclesWithoutPause(List<Vehicle> vehicles) {
+		if (vehicles == null || vehicles.isEmpty()) {
+			System.out.println("No vehicles found.");
+			return;
+		}
+
+		System.out.println();
+		System.out.printf(
+				"%-8s %-6s %-12s %-15s %-8s %-10s %10s %11s%n",
+				"VIN",
+				"YEAR",
+				"MAKE",
+				"MODEL",
+				"TYPE",
+				"COLOR",
+				"ODOMETER",
+				"PRICE"
+		);
+
+		System.out.println("---------------------------------------------------------------------------------------");
+
+		for (Vehicle vehicle : vehicles) {
+			System.out.println(vehicle);
+		}
+
+		System.out.println("---------------------------------------------------------------------------------------");
+		System.out.println("Total vehicles: " + vehicles.size());
+	}
+
+	private void pause() {
+		System.out.println();
+		readString("Press Enter to continue...");
+	}
 }
