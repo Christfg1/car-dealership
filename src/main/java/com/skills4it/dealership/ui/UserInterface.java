@@ -50,10 +50,14 @@ public class UserInterface {
 
 	private void displayHeader() {
 		System.out.println();
-		System.out.println("=============================================");
-		System.out.println("Welcome to:" + dealership.getName());
-		System.out.println(dealership.getAddress() + " | " + dealership.getPhone());
-		System.out.println("=============================================");
+		System.out.println("============================================================");
+		System.out.println("                 🚗 CAR DE 🚗 🚗 🚗 🚗 🚗 🚗 🚗ALERSHIP MANAGER   🚗                 ");
+		System.out.println("============================================================");
+
+		System.out.println(" Phone: " + dealership.getPhone());
+		System.out.println("------------------------------------------------------------");
+		System.out.println(" Manage inventory | Search vehicles | Add & remove cars");
+		System.out.println("============================================================");
 	}
 
 	private void displayMenu() {
