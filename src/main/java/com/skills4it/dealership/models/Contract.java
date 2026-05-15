@@ -3,25 +3,28 @@ package com.skills4it.dealership.models;
 import java.time.LocalDate;
 
 public abstract class Contract {
- private String contractDate;
 
- private String customerName;
- private String customerEmail;
- private boolean isVehicleSold;
+	private LocalDate contractDate;
+	private String customerName;
+	private String customerEmail;
+	private Vehicle vehicleSold;
 
- private Vehicle theVehicle;
+	public Contract(LocalDate contractDate,
+					String customerName,
+					String customerEmail,
+					Vehicle vehicleSold) {
 
- private double totalprice;
- private double monthlyPayment;
-
-	public Contract(LocalDate contractDate, String customerName, String customerEmail, Vehicle vehicleSold) {
+		this.contractDate = contractDate;
+		this.customerName = customerName;
+		this.customerEmail = customerEmail;
+		this.vehicleSold = vehicleSold;
 	}
 
-	public String getContractDate() {
+	public LocalDate getContractDate() {
 		return contractDate;
 	}
 
-	public void setContractDate(String contractDate) {
+	public void setContractDate(LocalDate contractDate) {
 		this.contractDate = contractDate;
 	}
 
@@ -41,21 +44,15 @@ public abstract class Contract {
 		this.customerEmail = customerEmail;
 	}
 
-	public boolean isVehicleSold() {
-		return isVehicleSold;
+	public Vehicle getVehicleSold() {
+		return vehicleSold;
 	}
 
-	public void setVehicleSold(boolean vehicleSold) {
-		isVehicleSold = vehicleSold;
+	public void setVehicleSold(Vehicle vehicleSold) {
+		this.vehicleSold = vehicleSold;
 	}
-
-	public abstract double getTotalprice();
-
-	public abstract double setTotalprice();
 
 	public abstract double getTotalPrice();
 
 	public abstract double getMonthlyPayment();
 }
-
-
