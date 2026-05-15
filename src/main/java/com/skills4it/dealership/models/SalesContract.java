@@ -26,7 +26,10 @@ public class SalesContract extends Contract {
 			return getVehicleSold().getPrice() * SALES_TAX_RATE;
 		}
 
-		public double getRecordingFee() {
+	private Vehicle getVehicleSold() {
+	}
+
+	public double getRecordingFee() {
 			return RECORDING_FEE;
 		}
 
@@ -46,7 +49,17 @@ public class SalesContract extends Contract {
 			this.finance = finance;
 		}
 
-		@Override
+	@Override
+	public double getTotalprice() {
+		return 0;
+	}
+
+	@Override
+	public double setTotalprice() {
+		return 0;
+	}
+
+	@Override
 		public double getTotalPrice() {
 			return getVehicleSold().getPrice()
 					+ getSalesTaxAmount()
