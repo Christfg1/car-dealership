@@ -1,5 +1,7 @@
 package com.skills4it.dealership.models;
 
+import java.time.LocalDate;
+
 public abstract class Contract {
  private String contractDate;
 
@@ -11,6 +13,9 @@ public abstract class Contract {
 
  private double totalprice;
  private double monthlyPayment;
+
+	public Contract(LocalDate contractDate, String customerName, String customerEmail, Vehicle vehicleSold) {
+	}
 
 	public String getContractDate() {
 		return contractDate;

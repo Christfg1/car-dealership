@@ -1,29 +1,80 @@
 package com.skills4it.dealership.models;
-
+import java.time.LocalDate;
 public class SalesContract extends Contract {
-	@Override
-	public double getTotalprice() {
-		return 0;
+
+
+
+		private static final double SALES_TAX_RATE = 0.05;
+		private static final double RECORDING_FEE = 100.00;
+		private static final double PROCESSING_FEE_UNDER_10000 = 295.00;
+		private static final double PROCESSING_FEE_10000_OR_MORE = 495.00;
+
+		private boolean finance;
+
+		public SalesContract(
+				LocalDate contractDate,
+				String customerName,
+				String customerEmail,
+				Vehicle vehicleSold,
+				boolean finance
+		) {
+			super(contractDate, customerName, customerEmail, vehicleSold);
+			this.finance = finance;
+		}
+
+		public double getSalesTaxAmount() {
+			return getVehicleSold().getPrice() * SALES_TAX_RATE;
+		}
+
+		public double getRecordingFee() {
+			return RECORDING_FEE;
+		}
+
+		public double getProcessingFee() {
+			if (getVehicleSold().getPrice() < 10000) {
+				return PROCESSING_FEE_UNDER_10000;
+			}
+
+			return PROCESSING_FEE_10000_OR_MORE;
+		}
+
+		public boolean isFinance() {
+			return finance;
+		}
+
+		public void setFinance(boolean finance) {
+			this.finance = finance;
+		}
+
+		@Override
+		public double getTotalPrice() {
+			return getVehicleSold().getPrice()
+					+ getSalesTaxAmount()
+					+ getRecordingFee()
+					+ getProcessingFee();
+		}
+
+		@Override
+		public double getMonthlyPayment() {
+			if (!finance) {
+				return 0;
+			}
+
+			double monthlyInterestRate;
+			int numberOfMonths;
+
+			if (getVehicleSold().getPrice() >= 10000) {
+				monthlyInterestRate = 0.0425 / 12;
+				numberOfMonths = 48;
+			} else {
+				monthlyInterestRate = 0.0525 / 12;
+				numberOfMonths = 24;
+			}
+
+			double loanAmount = getTotalPrice();
+
+			return loanAmount * monthlyInterestRate
+					/ (1 - Math.pow(1 + monthlyInterestRate, -numberOfMonths));
+		}
 	}
 
-	@Override
-	public double setTotalprice() {
-		return 0;
-	}
-
-//
-//	A SalesContract will include the following additional information:
-//			• Sales Tax Amount (5%)
-//• Recording Fee ($100)
-//• Processing fee ($295 for vehicles under $10,000 and $495 for all others
-//			• Whether they want to finance (yes/no)
-//• Monthly payment (if financed) based on:
-//			• All loans are at 4.25% for 48 months if the price is $10,000 or more
-//3
-//		• Otherwise they are at 5.25% for 24 month
-//	Methods will include a constructor and getters and setters for all fields except total
-//	price and monthly payment.
-//	You should provide overrides for getTotalPrice() and getMonthlyPayment() that will
-//return computed values based on the rules above.  It is possible that
-//	getMonthlyPayment() would return 0 if they chose the NO loan option.
-}
