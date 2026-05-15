@@ -1,11 +1,18 @@
 package com.skills4it.dealership.models;
 
+//todo: Check if the methods needs to be abstract
+
+
+
 public abstract class Contract {
  private String contractDate;
 
  private String customerName;
  private String customerEmail;
  private boolean isVehicleSold;
+
+ private Vehicle theVehicle;
+
  private double totalprice;
  private double monthlyPayment;
 
@@ -41,13 +48,14 @@ public abstract class Contract {
 		isVehicleSold = vehicleSold;
 	}
 
-	public double getTotalprice() {
-		return totalprice;
-	}
+	public abstract double getTotalprice();
 
-	public void setTotalprice(double totalprice) {
-		this.totalprice = totalprice;
-	}
+	public abstract double setTotalprice();
+
+}
+
+
+
 
 //	A Contract will hold information common to all contacts.  It should be an abstract
 //	class as you can't create a generic contract.
