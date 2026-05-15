@@ -1,9 +1,5 @@
 package com.skills4it.dealership.models;
 
-//todo: Check if the methods needs to be abstract
-
-
-
 public abstract class Contract {
  private String contractDate;
 
@@ -55,16 +51,3 @@ public abstract class Contract {
 }
 
 
-
-
-//	A Contract will hold information common to all contacts.  It should be an abstract
-//	class as you can't create a generic contract.
-//			• Date (as string) of contract
-//• Customer name
-//• Customer email
-//• Vehicle sold
-//• Total price
-//• Monthly payment
-//	Methods will include a constructor and getters and setters for all fields except total
-//	price and monthly payment.
-}
